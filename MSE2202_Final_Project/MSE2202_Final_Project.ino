@@ -59,5 +59,9 @@ Wire.begin();        // Wire library required for I2CEncoder library
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+Serial.print(bt_Motors_Enabled = digitalRead(ci_Motor_Enable_Switch));
+  encoder_LeftMotor.zero();
+  encoder_RightMotor.zero();
+  servo_LeftMotor.writeMicroseconds(2100);
+  servo_RightMotor.writeMicroseconds(2100);
 }
