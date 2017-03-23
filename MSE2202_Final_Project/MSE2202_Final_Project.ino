@@ -41,7 +41,7 @@ const int ci_Grip_Motor = 13;
 const int ci_I2C_SDA = A4;         // I2C data = white
 const int ci_I2C_SCL = A5;         // I2C clock = yellow
 
-][-
+
 const int ci_Forklift_Rotate_Front = 0;
 const int ci_Forklift_Rotate_Back = 180;
 const int ci_Forklift_Grip_Open = 140;
