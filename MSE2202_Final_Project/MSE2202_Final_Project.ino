@@ -36,7 +36,25 @@ const int ci_I2C_SCL = A5;         // I2C clock = yellow
 
 void setup() {
   // put your setup code here, to run once:
+Wire.begin();        // Wire library required for I2CEncoder library
+  Serial.begin(2400);
 
+  // set up drive motors
+  pinMode(ci_Right_Motor, OUTPUT);
+  servo_RightMotor.attach(ci_Right_Motor);
+  pinMode(ci_Left_Motor, OUTPUT);
+  servo_LeftMotor.attach(ci_Left_Motor);
+
+  // set up motor enable switch
+  pinMode(ci_Motor_Enable_Switch, INPUT);
+
+  // set up encoders. Must be initialized in order that they are chained together, 
+  // starting with the encoder directly connected to the Arduino. See I2CEncoder docs
+  // for more information
+  encoder_LeftMotor.init(1.0/3.0*MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);
+  encoder_LeftMotor.setReversed(false);  // adjust for positive count when moving forward
+  encoder_RightMotor.init(1.0/3.0*MOTOR_393_SPEED_ROTATIONS, MOTOR_393_TIME_DELTA);  
+  encoder_RightMotor.setReversed(true);  // adjust for positive count when moving forward
 }
 
 void loop() {
