@@ -14,15 +14,24 @@ Servo servo_ArmRotationMotor;
 Servo servo_ArmFlipMotor;
 Servo servo_GripMotor;
 
+Servo servo_LeftPlatformServo;
+Servo servo_RightPlatformServo;
+
 I2CEncoder encoder_RightMotor;
 I2CEncoder encoder_LeftMotor;
 
 // Uncomment keywords to enable debugging output
 
 //#define DEBUG_MOTORS
-//#define DEBUG_ENCODERS
+//#define DEBUG_ENCODERS_LEFT
+//#define DEBUG_ENCODERS_FRONT
 //#define DEBUG_ULTRASONIC
 //#define DEBUG_MOTOR_CALIBRATION
+
+const int ci_Left_Motor_Offset_Address_L = 12;
+const int ci_Left_Motor_Offset_Address_H = 13;
+const int ci_Right_Motor_Offset_Address_L = 14;
+const int ci_Right_Motor_Offset_Address_H = 15;
 
 const int ci_Ultrasonic_Left_Ping = 2;   //input plug
 const int ci_Ultrasonic_Left_Data = 3;   //output plug
@@ -38,9 +47,16 @@ const int ci_Arm_Rotation_Motor = 11;
 const int ci_Arm_Flip_Motor = 12;
 const int ci_Grip_Motor = 13;
 
+const int ci_Left_Platform_Servo = A0;
+const int ci_Right_Platform_Servo = A1;
+
+const int ci_Course_Switch = A2;
+
+const int ci_Hall_Effect = A3;
+
 const int ci_I2C_SDA = A4;         // I2C data = white
 const int ci_I2C_SCL = A5;         // I2C clock = yellow
-
+/*IR Sensor will be connected directly to recieve port*/
 
 const int ci_Forklift_Rotate_Front = 0;
 const int ci_Forklift_Rotate_Back = 180;
@@ -69,6 +85,9 @@ unsigned int ui_Right_Motor_Speed;
 long l_Left_Motor_Position;
 long l_Right_Motor_Position;
 
+int Left_Platform_Servo_Pos = 0;
+int Right_Platform_Servo_Pos = 0;
+
 unsigned long ul_Display_Time;
 unsigned long ul_Calibration_Time;
 unsigned long ui_Left_Motor_Offset;
@@ -80,9 +99,15 @@ void setup() {
   Wire.begin();
   Serial.begin(2400);
 
+  servo_LeftPlatformServo.attach(ci_Left_Platform_Servo);
+  servo_RightPlatformServo.attach(ci_Right_Platform_Servo);
+
   //set up ultrasonic
-  pinMode(ci_Ultrasonic_Ping, OUTPUT);
-  pinMode(ci_Ultrasonic_Data, INPUT);
+  pinMode(ci_Ultrasonic_Left_Ping, OUTPUT);
+  pinMode(ci_Ultrasonic_Left_Data, INPUT);
+
+  pinMode(ci_Ultrasonic_Front_Ping, OUTPUT);
+  pinMode(ci_Ultrasonic_Front_Data, INPUT);
 
   //set up drive motors
   pinMode(ci_Right_Motor, OUTPUT);
@@ -117,7 +142,18 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-
+  if(ReadIRsensor() == 1)
+  {
+    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
+    servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
+  }
+  else if (ReadIRsensor() == -1)
+  {  }
+  else
+  {
+    servo_LeftMotor.writeMicroseconds(ci_Left_Motor_Stop);
+    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
+  }  
 }
 
   void CalibrateMotors()
@@ -172,19 +208,19 @@ void loop() {
 
 
   // measure distance to target using ultrasonic sensor
-  void Ping()
+  void PingLeft()
   {
     //Ping Ultrasonic
     //Send the Ultrasonic Range Finder a 10 microsecond pulse per tech spec
-    digitalWrite(ci_Ultrasonic_Ping, HIGH);
+    digitalWrite(ci_Ultrasonic_Left_Ping, HIGH);
     delayMicroseconds(10);  //The 10 microsecond pause where the pulse in "high"
-    digitalWrite(ci_Ultrasonic_Ping, LOW);
+    digitalWrite(ci_Ultrasonic_Left_Ping, LOW);
     //use command pulseIn to listen to Ultrasonic_Data pin to record the
     //time that it takes from when the Pin goes HIGH until it goes LOW
-    ul_Echo_Time = pulseIn(ci_Ultrasonic_Data, HIGH, 10000);
+    ul_Echo_Time = pulseIn(ci_Ultrasonic_Left_Data, HIGH, 10000);
 
     // Print Sensor Readings
-#ifdef DEBUG_ULTRASONIC
+#ifdef DEBUG_ULTRASONIC_LEFT
     Serial.print("Time (microseconds): ");
     Serial.print(ul_Echo_Time, DEC);
     Serial.print(", Inches: ");
@@ -193,3 +229,51 @@ void loop() {
     Serial.println(ul_Echo_Time / 58); //divide time by 58 to get distance in cm
 #endif
   }
+
+  // measure distance to target using ultrasonic sensor
+  void PingFront()
+  {
+    //Ping Ultrasonic
+    //Send the Ultrasonic Range Finder a 10 microsecond pulse per tech spec
+    digitalWrite(ci_Ultrasonic_Front_Ping, HIGH);
+    delayMicroseconds(10);  //The 10 microsecond pause where the pulse in "high"
+    digitalWrite(ci_Ultrasonic_Front_Ping, LOW);
+    //use command pulseIn to listen to Ultrasonic_Data pin to record the
+    //time that it takes from when the Pin goes HIGH until it goes LOW
+    ul_Echo_Time = pulseIn(ci_Ultrasonic_Front_Data, HIGH, 10000);
+
+    // Print Sensor Readings
+#ifdef DEBUG_ULTRASONIC_FRONT
+    Serial.print("Time (microseconds): ");
+    Serial.print(ul_Echo_Time, DEC);
+    Serial.print(", Inches: ");
+    Serial.print(ul_Echo_Time / 148); //divide time by 148 to get distance in inches
+    Serial.print(", cm: ");
+    Serial.println(ul_Echo_Time / 58); //divide time by 58 to get distance in cm
+#endif
+  }
+
+
+  int ReadIRsensor()
+  {
+    if(Serial.available())
+    {
+      if(analogRead(ci_Course_Switch) == 1023 && (Serial.read() == || Serial.read() == ))
+      {
+        return 1;
+      }
+      else if(analogRead(ci_Course_Switch) == 0 && (Serial.read() == || Serial.read() == ))
+      {
+        return 1;
+      }
+      else
+      {
+        return -1;
+      }
+    }
+    else
+    {
+      return 0;
+    }
+  }
+
