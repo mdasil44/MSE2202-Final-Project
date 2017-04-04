@@ -40,9 +40,9 @@ const int ci_Ultrasonic_Front_Data = 5;
 
 const int ci_Forklift_Rotation_Motor = 6;
 const int ci_Forklift_Grip_Motor = 7;
-const int ci_Forklift_Raise_Motor = 8;
-const int ci_Right_Motor = 9;
-const int ci_Left_Motor = 10;
+const int ci_Forklift_Raise_Motor = 10;
+const int ci_Right_Motor = 8;
+const int ci_Left_Motor = 9;
 const int ci_Arm_Rotation_Motor = 11;
 const int ci_Arm_Flip_Motor = 12;
 const int ci_Grip_Motor = 13;
@@ -95,6 +95,8 @@ unsigned long ui_Right_Motor_Offset;
 
 boolean bt_Cal_Initialized = false;
 
+int stage = 0;
+
 void setup() {
   Wire.begin();
   Serial.begin(2400);
@@ -142,18 +144,23 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-  if(ReadIRsensor() == 1)
-  {
-    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
-    servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
-  }
-  else if (ReadIRsensor() == -1)
-  {  }
-  else
-  {
-    servo_LeftMotor.writeMicroseconds(ci_Left_Motor_Stop);
-    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
-  }  
+ 
+    servo_RightMotor.writeMicroseconds(ui_Motors_Speed);
+    servo_LeftMotor.writeMicroseconds(ui_Motors_Speed);
+ 
+
+//  if(ReadIRsensor() == 1)
+//  {
+//    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
+//    servo_LeftMotor.writeMicroseconds(ui_Left_Motor_Speed);
+//  }
+//  else if (ReadIRsensor() == -1)
+//  {  }
+//  else
+//  {
+//    servo_LeftMotor.writeMicroseconds(ci_Left_Motor_Stop);
+//    servo_RightMotor.writeMicroseconds(ui_Right_Motor_Speed);
+//  }  
 }
 
   void CalibrateMotors()
@@ -178,12 +185,14 @@ void loop() {
           // May have to update this if different calibration time is used
           ui_Right_Motor_Offset = 0;
           ui_Left_Motor_Offset = (l_Left_Motor_Position - l_Right_Motor_Position) / 4;
+          stage++;
         }
         else
         {
           // May have to update this if different calibration time is used
           ui_Right_Motor_Offset = (l_Right_Motor_Position - l_Left_Motor_Position) / 4;
           ui_Left_Motor_Offset = 0;
+          stage++;
         }
 
 #ifdef DEBUG_MOTOR_CALIBRATION
@@ -258,11 +267,11 @@ void loop() {
   {
     if(Serial.available())
     {
-      if(analogRead(ci_Course_Switch) == 1023 && (Serial.read() == || Serial.read() == ))
+      if(analogRead(ci_Course_Switch) == 1023 && (Serial.read() == 65 || Serial.read() == 69)) //A&E switch up
       {
         return 1;
       }
-      else if(analogRead(ci_Course_Switch) == 0 && (Serial.read() == || Serial.read() == ))
+      else if(analogRead(ci_Course_Switch) == 0 && (Serial.read() == 73|| Serial.read() == 79)) //I&O switch down
       {
         return 1;
       }
